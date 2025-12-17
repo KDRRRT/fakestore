@@ -1,35 +1,60 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React, { useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { setProducts, setLoading, setSuccess, setError, clearSelectedProduct } from './store/productSlice.js';
+import Header from './components/Header';
+import SearchBar from './components/SearchBar';
+import ProductList from './components/ProductList';
+import ProductModal from './components/ProductModal';
+import { CssBaseline } from '@mui/material';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const dispatch = useDispatch();
+  
+
+  const selectedProduct = useSelector((state) => state.products?.selectedProduct || null);
+  const status = useSelector((state) => state.products?.status || 'idle');
+  
+
+
+
+ const fetchProducts = async () => {
+    dispatch(setLoading());
+    try {
+      const response = await fetch('https://fakestoreapi.com/products');
+      const data = await response.json();
+      dispatch(setProducts(data));
+      dispatch(setSuccess());
+    } catch (err) {
+      dispatch(setError(err.message));
+    }
+  };
+
+    useEffect(() => {
+    if (status === 'idle') {
+      fetchProducts();
+    }
+  }, [status]);
+
+  const handleModalClose = () => {
+    dispatch(clearSelectedProduct());
+  };
 
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      <CssBaseline />
+      <Header />
+      <SearchBar />
+      <ProductList />
+      {selectedProduct && (
+        <ProductModal
+          product={selectedProduct}
+          open={!!selectedProduct}
+          onClose={handleModalClose}
+        />
+      )}
     </>
-  )
+  );
 }
 
-export default App
+export default App;
+
